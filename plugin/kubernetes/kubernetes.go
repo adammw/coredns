@@ -101,14 +101,10 @@ func (k *Kubernetes) Services(ctx context.Context, state request.Request, exact 
 		t, _ := dnsutil.TrimZone(state.Name(), state.Zone)
 
 		segs := dns.SplitDomainName(t)
-		if len(segs) != 1 {
-			return nil, nil
+		if len(segs) == 1 && segs[0] != "dns-version" {
+			svc := msg.Service{Text: DNSSchemaVersion, TTL: 28800, Key: msg.Path(state.QName(), coredns)}
+			return []msg.Service{svc}, nil
 		}
-		if segs[0] != "dns-version" {
-			return nil, nil
-		}
-		svc := msg.Service{Text: DNSSchemaVersion, TTL: 28800, Key: msg.Path(state.QName(), coredns)}
-		return []msg.Service{svc}, nil
 
 	case dns.TypeNS:
 		// We can only get here if the qname equals the zone, see ServeDNS in handler.go.
@@ -142,6 +138,12 @@ func (k *Kubernetes) Services(ctx context.Context, state request.Request, exact 
 	}
 
 	s, e := k.Records(ctx, state, false)
+
+	// TXT is not yet implemented, pass through error to return correct dns response.
+
+	if state.QType() != dns.TypeTXT {
+		return nil, e
+	}
 
 	// SRV for external services is not yet implemented, so remove those records.
 

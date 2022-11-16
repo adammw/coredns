@@ -239,13 +239,25 @@ var dnsTestCases = []kubeTestCase{
 			test.SOA("cluster.local.	5	IN	SOA	ns.dns.cluster.local. hostmaster.cluster.local. 1499347823 7200 1800 86400 5"),
 		},
 	}},
-	// TXT Schema
+	// TXT Schema Version record
 	{Case: test.Case{
 		Qname: "dns-version.cluster.local.", Qtype: dns.TypeTXT,
 		Rcode: dns.RcodeSuccess,
 		Answer: []dns.RR{
 			test.TXT("dns-version.cluster.local 28800 IN TXT 1.1.0"),
 		},
+	}},
+	// TXT for Service that does exist
+	{Case: test.Case{
+		Qname: "hdlsprtls.testns.svc.cluster.local.", Qtype: dns.TypeTXT,
+		Rcode:  dns.RcodeSuccess,
+		Answer: []dns.RR{},
+	}},
+	// TXT for Service that does not exist
+	{Case: test.Case{
+		Qname: "bogusendpoint.hdls1.testns.svc.cluster.local.", Qtype: dns.TypeTXT,
+		Rcode:  dns.RcodeNameError,
+		Answer: []dns.RR{},
 	}},
 	// A Service (Headless) does not exist
 	{Case: test.Case{
@@ -661,8 +673,8 @@ var svcIndex = map[string][]*object.Service{
 			Namespace:  "testns",
 			Type:       api.ServiceTypeClusterIP,
 			ClusterIPs: []string{"10.0.0.3", "10::3"}, Ports: []api.ServicePort{
-				{Name: "http", Protocol: "tcp", Port: 80},
-			},
+			{Name: "http", Protocol: "tcp", Port: 80},
+		},
 		},
 	},
 }
